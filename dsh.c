@@ -15,7 +15,6 @@
 #include <err.h>
 #include <sys/stat.h>
 #include <string.h>
-#include "builtins.h"
 
 #define CAP 256
 
