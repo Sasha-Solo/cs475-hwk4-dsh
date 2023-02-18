@@ -65,15 +65,21 @@
 * @result an int 0 or 1 representing if method failed or succeeded
 */ 
  int modeOne(char** input){
+
+    //counts number of args:
+    int count = 0;
+    for (int i = 0; input[i] != NULL; i++){
+        count++;
+    }
+
+    int andSymbol = 0; //to keep track of &
+    if (strcmp(input[count-1], "&") == 0){
+        andSymbol = 1;
+    }
+   
     if (access(input[0], F_OK | X_OK) == 0){ //if file exists and is executable, proceed with mode one
         //get space on heap for array of strings
         char** arg = (char**) malloc(CAP * sizeof(char*));
-
-        //counts number of args:
-       int count = 0;
-        for (int i = 0; input[i] != NULL; i++){
-            count++;
-        }
     
         // this loops through each array element and instantiates
         // an array of capacity CAP
@@ -105,8 +111,10 @@
 
         }
         else{ //we are in parent
-            wait(NULL);
-
+            if (andSymbol == 0){
+                wait(NULL);
+            }
+    
             //free up space
             for (int i = 0; arg[i] != NULL; i++) {
                 char* currPointer = arg[i]; //get each pointer in terms
@@ -116,7 +124,7 @@
 	        free(arg);
             arg = NULL;
         }
-
+        return 1;
     }
     else{
         printf("File doesn't exist or is not executable!\n"); // Alert user 
@@ -149,20 +157,17 @@
 
     if (access(cwd, F_OK | X_OK) == 0){ //check if the file is in the cwd
         modeOne(input); //if found, execute mode 1
+        return 1;
     } 
     else{ //if the file is not in the cwd...
         
-        //malloc
-        //make a copy of getenv 
-        char* path = getenv("PATH"); //get the paths inside PATH env variable
-        
-        char* pathCopy = (char*) malloc((strlen(path) + 1) * sizeof(char*));
-
+        //malloc and make a copy of getenv(PATH)
+        char* path = getenv("PATH"); //get the paths inside PATH env variable //DO I NEED TO FREE
+        char* pathCopy = (char*) malloc((strlen(path) + 1) * sizeof(char));
         strcpy(pathCopy, path);
-
         char** splitPath = split(pathCopy, ":");
 
-        //concatenate user input to end of each splitPath[i]
+        //concatenate user input to end of each individual path that we want to check
         for (int i = 0; splitPath[i] != NULL; i++){
             strcat(splitPath[i], "/");
             strcat(splitPath[i], input[0]); 
@@ -184,6 +189,7 @@
 			        currPointer = NULL; //set to null for defensive programming
     	        }
                 free(splitPath);
+                splitPath = NULL;
 
                 return 1;
             } 
@@ -191,6 +197,7 @@
 
         printf("ERROR: Command not found\n");
 
+        //free pathCopy twice bc returned and used twice
         free(pathCopy); //free pathCopy
         pathCopy = NULL;
         
@@ -207,7 +214,6 @@
     }
 
     return 0;
-
  }
 
  
